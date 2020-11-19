@@ -1936,10 +1936,16 @@ func (d *VirtualMachineController) processVmUpdate(origVMI *v1.VirtualMachineIns
 		return err
 	}
 
+	//addd by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: before connecting virt-launcher")
+
 	client, err := d.getLauncherClient(vmi)
 	if err != nil {
 		return fmt.Errorf("unable to create virt-launcher client connection: %v", err)
 	}
+
+	//addd by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: able to connect virt-launcher")
 
 	// this adds, removes, and replaces migration proxy connections as needed
 	err = d.handleMigrationProxy(vmi)
@@ -2063,10 +2069,18 @@ func (d *VirtualMachineController) processVmUpdate(origVMI *v1.VirtualMachineIns
 			MemBalloonStatsPeriod: period,
 		}
 
+		//addd by Peng Xie
+		log.DefaultLogger().Info("Peng Xie: before synchorize VMI")
+
 		err = client.SyncVirtualMachine(vmi, options)
 		if err != nil {
+			//added by Peng Xie
+			log.DefaultLogger().Info("Peng Xie: error synchorize VMI")
 			return err
 		}
+
+		// added by Peng Xie
+		log.DefaultLogger().Info("Peng Xie: after synchorize VMI")
 		d.recorder.Event(vmi, k8sv1.EventTypeNormal, v1.Created.String(), "VirtualMachineInstance defined.")
 	}
 

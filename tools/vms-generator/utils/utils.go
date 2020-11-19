@@ -56,6 +56,7 @@ const (
 	VmiMultusMultipleNet = "vmi-multus-multiple-net"
 	VmiHostDisk          = "vmi-host-disk"
 	VmiGPU               = "vmi-gpu"
+	VmiIB                = "vmi-ib"
 	VmTemplateFedora     = "vm-template-fedora"
 	VmTemplateRHEL7      = "vm-template-rhel7"
 	VmTemplateWindows    = "vm-template-windows2012r2"
@@ -998,6 +999,22 @@ func GetVMIGPU() *v1.VirtualMachineInstance {
 		},
 	}
 	vmi.Spec.Domain.Devices.GPUs = GPUs
+	initFedora(&vmi.Spec)
+	addNoCloudDiskWitUserData(&vmi.Spec, "#cloud-config\npassword: fedora\nchpasswd: { expire: False }")
+	return vmi
+}
+
+//added by Peng Xie
+func GetVMIIB() *v1.VirtualMachineInstance {
+	vmi := getBaseVMI(VmiIB)
+	vmi.Spec.Domain.Resources.Requests[k8sv1.ResourceMemory] = resource.MustParse("1024M")
+	IBs := []v1.IB{
+		v1.IB{
+			Name:       "ib1",
+			DeviceName: "ib.mellanox.com/generic",
+		},
+	}
+	vmi.Spec.Domain.Devices.IBs = IBs
 	initFedora(&vmi.Spec)
 	addNoCloudDiskWitUserData(&vmi.Spec, "#cloud-config\npassword: fedora\nchpasswd: { expire: False }")
 	return vmi

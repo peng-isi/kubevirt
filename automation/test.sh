@@ -297,11 +297,11 @@ elif [[ $TARGET =~ sriov.* ]]; then
 elif [[ $TARGET =~ gpu.* ]]; then
   export KUBEVIRT_E2E_FOCUS=GPU
 elif [[ $TARGET =~ (okd|ocp).* ]]; then
-  export KUBEVIRT_E2E_SKIP="SRIOV|GPU"
+  export KUBEVIRT_E2E_SKIP="SRIOV|GPU|IB"
 elif [[ $TARGET =~ ipv6.* ]]; then
-  export KUBEVIRT_E2E_SKIP="Multus|SRIOV|GPU|.*slirp.*|.*bridge.*"
+  export KUBEVIRT_E2E_SKIP="Multus|SRIOV|GPU|IB|.*slirp.*|.*bridge.*"
 else
-  export KUBEVIRT_E2E_SKIP="Multus|SRIOV|GPU"
+  export KUBEVIRT_E2E_SKIP="Multus|SRIOV|GPU|IB"
 fi
 
 if [[ "$KUBEVIRT_STORAGE" == "rook-ceph" ]]; then

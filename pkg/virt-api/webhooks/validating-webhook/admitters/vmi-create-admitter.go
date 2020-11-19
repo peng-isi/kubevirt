@@ -33,6 +33,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	k8sfield "k8s.io/apimachinery/pkg/util/validation/field"
 
+	"kubevirt.io/client-go/log" //added by Peng Xie
+
 	v1 "kubevirt.io/client-go/api/v1"
 	"kubevirt.io/kubevirt/pkg/hooks"
 	"kubevirt.io/kubevirt/pkg/util"
@@ -87,16 +89,45 @@ func (admitter *VMICreateAdmitter) Admit(ar *v1beta1.AdmissionReview) *v1beta1.A
 		return webhookutils.ToAdmissionResponseError(err)
 	}
 
+	//added by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: before validating VMI...")
 	causes := ValidateVirtualMachineInstanceSpec(k8sfield.NewPath("spec"), &vmi.Spec, admitter.ClusterConfig)
+
+	//added by Peng Xie
+	//	if len(causes) > 0 {
+	//		log.DefaultLogger().Info("Peng Xie: there is an issue after validating VM instance Spec...")
+	//	}
 	causes = append(causes, ValidateVirtualMachineInstanceMandatoryFields(k8sfield.NewPath("spec"), &vmi.Spec)...)
+
+	//added by Peng Xie
+	//	cause1 := ValidateVirtualMachineInstanceMandatoryFields(k8sfield.NewPath("spec"), &vmi.Spec)
+	//	if len(cause1) > 0 {
+	//		log.DefaultLogger().Info("Peng Xie: there is an issue after validating VM instance Mandatory Field ...")
+	//	}
+
 	causes = append(causes, ValidateVirtualMachineInstanceMetadata(k8sfield.NewPath("metadata"), &vmi.ObjectMeta, admitter.ClusterConfig, accountName)...)
+
+	//added by Peng Xie
+	//cause2 := ValidateVirtualMachineInstanceMetadata(k8sfield.NewPath("metadata"), &vmi.ObjectMeta, admitter.ClusterConfig, accountName)
+	//	if len(cause2) > 0 {
+	//		log.DefaultLogger().Info("Peng Xie: there is an issue after validating VM instance Metadata...")
+	//	}
 	// In a future, yet undecided, release either libvirt or QEMU are going to check the hyperv dependencies, so we can get rid of this code.
 	causes = append(causes, webhooks.ValidateVirtualMachineInstanceHypervFeatureDependencies(k8sfield.NewPath("spec"), &vmi.Spec)...)
 
+	//added by Peng Xie
+	//	cause3 := webhooks.ValidateVirtualMachineInstanceHypervFeatureDependencies(k8sfield.NewPath("spec"), &vmi.Spec)
+	//	if len(cause3) > 0 {
+	//		log.DefaultLogger().Info("Peng Xie: there is an issue after validating VM instance HyperFeature Dependecy...")
+	//	}
+
 	if len(causes) > 0 {
+		log.DefaultLogger().Info("Peng Xie: there is an issue after validating VMI...")
 		return webhookutils.ToAdmissionResponse(causes)
 	}
 
+	//added by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: after validating VMI, no issue found...")
 	reviewResponse := v1beta1.AdmissionResponse{}
 	reviewResponse.Allowed = true
 	return &reviewResponse
@@ -106,6 +137,9 @@ func ValidateVirtualMachineInstanceSpec(field *k8sfield.Path, spec *v1.VirtualMa
 	var causes []metav1.StatusCause
 	volumeNameMap := make(map[string]*v1.Volume)
 	networkNameMap := make(map[string]*v1.Network)
+
+	//added by Peng Xie
+	//	fmt.Fprintf("Peng Xie:Validating Virtual Machine Instance Spec...\n")
 
 	if len(spec.Domain.Devices.Disks) > arrayLenMax {
 		causes = append(causes, metav1.StatusCause{
@@ -940,11 +974,18 @@ func ValidateVirtualMachineInstanceSpec(field *k8sfield.Path, spec *v1.VirtualMa
 	if spec.Domain.Devices.GPUs != nil && !config.GPUPassthroughEnabled() {
 		causes = append(causes, metav1.StatusCause{
 			Type:    metav1.CauseTypeFieldValueInvalid,
-			Message: fmt.Sprintf("GPU feature gate is not enabled in kubevirt-config"),
+			Message: fmt.Sprintf("GPU Peng Xie feature gate is not enabled in kubevirt-config"),
 			Field:   field.Child("GPUs").String(),
 		})
 	}
-
+	//added by Peng Xie
+	if spec.Domain.Devices.IBs != nil && !config.IBPassthroughEnabled() {
+		causes = append(causes, metav1.StatusCause{
+			Type:    metav1.CauseTypeFieldValueInvalid,
+			Message: fmt.Sprintf("Peng Xie3  IB feature gate is not enabled in kubevirt-config"),
+			Field:   field.Child("IBs").String(),
+		})
+	}
 	if spec.Domain.Devices.Filesystems != nil && !config.VirtiofsEnabled() {
 		causes = append(causes, metav1.StatusCause{
 			Type:    metav1.CauseTypeFieldValueInvalid,

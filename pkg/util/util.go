@@ -4,6 +4,8 @@ import (
 	v1 "kubevirt.io/client-go/api/v1"
 )
 
+// added by Peng Xie fmt
+
 const ExtensionAPIServerAuthenticationConfigMap = "extension-apiserver-authentication"
 const RequestHeaderClientCAFileKey = "requestheader-client-ca-file"
 const VirtShareDir = "/var/run/kubevirt"
@@ -30,6 +32,15 @@ func IsSRIOVVmi(vmi *v1.VirtualMachineInstance) bool {
 // Check if a VMI spec requests GPU
 func IsGPUVMI(vmi *v1.VirtualMachineInstance) bool {
 	if vmi.Spec.Domain.Devices.GPUs != nil && len(vmi.Spec.Domain.Devices.GPUs) != 0 {
+		return true
+	}
+	return false
+}
+
+// Check if a VMI spec requests IB
+func IsIBVMI(vmi *v1.VirtualMachineInstance) bool {
+	if vmi.Spec.Domain.Devices.IBs != nil && len(vmi.Spec.Domain.Devices.IBs) != 0 {
+		//		fmt.Println("Peng Xie: IB VMI is enabled!")
 		return true
 	}
 	return false

@@ -403,6 +403,8 @@ func IsDisconnected(err error) bool {
 }
 
 func (c *VirtLauncherClient) SyncVirtualMachine(vmi *v1.VirtualMachineInstance, options *cmdv1.VirtualMachineOptions) error {
+	//added by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: before sending SyncVMI")
 	return c.genericSendVMICmd("SyncVMI", c.v1client.SyncVirtualMachine, vmi, options)
 }
 

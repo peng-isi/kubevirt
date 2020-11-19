@@ -357,10 +357,14 @@ func (t *templateService) RenderLaunchManifest(vmi *v1.VirtualMachineInstance) (
 		},
 	})
 
-	if util.IsSRIOVVmi(vmi) || util.IsGPUVMI(vmi) {
+	if util.IsSRIOVVmi(vmi) || util.IsGPUVMI(vmi) || util.IsIBVMI(vmi) {
 		// libvirt needs this volume to access PCI device config;
 		// note that the volume should not be read-only because libvirt
 		// opens the config for writing
+
+		//added by Peng Xie
+		log.DefaultLogger().Info("Peng Xie: IBVMI is configured and mount  sys/devices...")
+
 		volumeMounts = append(volumeMounts, k8sv1.VolumeMount{
 			Name:      "pci-devices",
 			MountPath: "/sys/devices/",
@@ -819,6 +823,12 @@ func (t *templateService) RenderLaunchManifest(vmi *v1.VirtualMachineInstance) (
 	if util.IsGPUVMI(vmi) {
 		for _, gpu := range vmi.Spec.Domain.Devices.GPUs {
 			requestResource(&resources, gpu.DeviceName)
+		}
+	}
+
+	if util.IsIBVMI(vmi) {
+		for _, ib := range vmi.Spec.Domain.Devices.IBs {
+			requestResource(&resources, ib.DeviceName)
 		}
 	}
 

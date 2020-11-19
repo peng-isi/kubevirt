@@ -372,6 +372,7 @@ type Devices struct {
 	//Whether to attach a GPU device to the vmi.
 	// +optional
 	GPUs []GPU `json:"gpus,omitempty"`
+	IBs  []IB  `json:"ibs,omitempty"`
 	// Filesystems describes filesystem which is connected to the vmi.
 	// +optional
 	// +listType=set
@@ -406,6 +407,13 @@ type FilesystemVirtiofs struct{}
 //
 // +k8s:openapi-gen=true
 type GPU struct {
+	// Name of the GPU device as exposed by a device plugin
+	Name       string `json:"name"`
+	DeviceName string `json:"deviceName"`
+}
+
+// +k8s:openapi-gen=true
+type IB struct {
 	// Name of the GPU device as exposed by a device plugin
 	Name       string `json:"name"`
 	DeviceName string `json:"deviceName"`

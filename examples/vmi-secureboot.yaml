@@ -28,5 +28,5 @@ spec:
   terminationGracePeriodSeconds: 0
   volumes:
   - containerDisk:
-      image: registry:5000/kubevirt/microlivecd-container-disk-demo:devel
+      image: index.docker.io/seawolf2/microlivecd-container-disk-demo:mybuild
     name: containerdisk

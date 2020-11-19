@@ -8476,6 +8476,12 @@
        "$ref": "#/definitions/v1.GPU"
       }
      },
+     "ibs": {
+      "type": "array",
+      "items": {
+       "$ref": "#/definitions/v1.IB"
+      }
+     },
      "inputs": {
       "description": "Inputs describe input devices",
       "type": "array",
@@ -8929,6 +8935,22 @@
     "properties": {
      "action": {
       "description": "The action to take. Valid values are poweroff, reset, shutdown. Defaults to reset.",
+      "type": "string"
+     }
+    }
+   },
+   "v1.IB": {
+    "type": "object",
+    "required": [
+     "name",
+     "deviceName"
+    ],
+    "properties": {
+     "deviceName": {
+      "type": "string"
+     },
+     "name": {
+      "description": "Name of the GPU device as exposed by a device plugin",
       "type": "string"
      }
     }

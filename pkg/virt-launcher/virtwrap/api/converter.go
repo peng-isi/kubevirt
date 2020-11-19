@@ -72,6 +72,7 @@ type ConverterContext struct {
 	SMBios                *cmdv1.SMBios
 	GpuDevices            []string
 	VgpuDevices           []string
+	IBDevices             []string
 	EmulatorThreadCpu     *int
 	OVMFPath              string
 	MemBalloonStatsPeriod uint
@@ -670,6 +671,9 @@ func Convert_v1_VirtualMachine_To_api_Domain(vmi *v1.VirtualMachineInstance, dom
 	domain.ObjectMeta.Name = vmi.ObjectMeta.Name
 	domain.ObjectMeta.Namespace = vmi.ObjectMeta.Namespace
 
+	//added by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: Convert_v1_VirtualMachine_To_api_Domain is called...")
+
 	// Set VM CPU cores
 	// CPU topology will be created everytime, because user can specify
 	// number of cores in vmi.Spec.Domain.Resources.Requests/Limits, not only
@@ -1160,6 +1164,35 @@ func Convert_v1_VirtualMachine_To_api_Domain(vmi *v1.VirtualMachineInstance, dom
 		}
 	}
 
+	// added by Peng Xie to sppend HostDevices to DomXML if IB is requested
+	log.DefaultLogger().Info("Peng Xie: before parsing  the IB PCI addresses")
+	if util.IsIBVMI(vmi) {
+		ibPCIAddresses := append([]string{}, c.IBDevices...)
+
+		//added  by Peng Xie
+		log.DefaultLogger().Info("Peng Xie: parsing the IB PCI addresses") //added  by Peng Xie
+		//added by Peng Xie to hardcoded the pci address of IB
+		ibPCIAddresses = append(ibPCIAddresses, "0000:21:00.1")
+
+		/*
+			for _, pciAddr := range ibPCIAddresses {
+				_, err := decoratePciAddressField(pciAddr)
+				if err != nil {
+					log.DefaultLogger().Info("Peng Xie: error in parsing the  PCI addresses")
+				}
+				log.DefaultLogger().Info("Peng Xie: after parsinf the PCI addresses")
+			}
+		*/
+		hostDevices, err := createHostDevicesFromPCIAddresses(ibPCIAddresses)
+		if err != nil {
+			log.Log.Reason(err).Error("Unable to parse PCI addresses")
+			log.DefaultLogger().Info("Peng Xie: Unable to parse PCI addresses")
+		} else {
+			domain.Spec.Devices.HostDevices = append(domain.Spec.Devices.HostDevices, hostDevices...)
+			log.DefaultLogger().Info("Peng Xie: after append IB PCI addresses as host devices")
+		}
+	}
+
 	if vmi.Spec.Domain.CPU == nil || vmi.Spec.Domain.CPU.Model == "" {
 		domain.Spec.CPU.Mode = v1.CPUModeHostModel
 	}
@@ -1508,7 +1541,6 @@ func createSlirpNetwork(iface v1.Interface, network v1.Network, domain *Domain) 
 	if err != nil {
 		return err
 	}
-
 	err = configDNSSearchName(&qemuArg)
 	if err != nil {
 		return err
@@ -1652,9 +1684,22 @@ func GetResolvConfDetailsFromPod() ([][]byte, []string, error) {
 
 func decoratePciAddressField(addressField string) (*Address, error) {
 	dbsfFields, err := util.ParsePciAddress(addressField)
+
+	//added by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: decorate PCI address")
+
 	if err != nil {
+		//added by Peng Xie
+		log.DefaultLogger().Info("Peng Xie: fail to decorate PCI address")
 		return nil, err
 	}
+
+	//added by Peng Xie
+	log.DefaultLogger().Errorf("Peng Xie: decorate PCI Address adbsField[0]%s", dbsfFields[0])
+	log.DefaultLogger().Errorf("Peng Xie: decorate PCI Address adbsField[1]%s", dbsfFields[1])
+	log.DefaultLogger().Errorf("Peng Xie: decorate PCI Address adbsField[2]%s", dbsfFields[2])
+	log.DefaultLogger().Errorf("Peng Xie: decorate PCI Address adbsField[3]%s", dbsfFields[3])
+
 	decoratedAddrField := &Address{
 		Type:     "pci",
 		Domain:   "0x" + dbsfFields[0],
@@ -1666,12 +1711,25 @@ func decoratePciAddressField(addressField string) (*Address, error) {
 }
 
 func createHostDevicesFromPCIAddresses(pcis []string) ([]HostDevice, error) {
+	//added by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: create host device from pci addresses")
+
 	var hds []HostDevice
 	for _, pciAddr := range pcis {
+
+		//added by Peng Xie
+		log.DefaultLogger().Info("Peng Xie: before decorating PCI address")
+
 		address, err := decoratePciAddressField(pciAddr)
 		if err != nil {
+			//added by Peng Xie
+			log.DefaultLogger().Info("Peng Xie: fail to decorate PCI address")
+
 			return nil, err
 		}
+
+		//added by Peng Xie
+		log.DefaultLogger().Errorf("Peng Xie: create HostDevices from PCI Address %s", address)
 
 		hostDev := HostDevice{
 			Source: HostDeviceSource{

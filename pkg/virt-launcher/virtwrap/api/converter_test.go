@@ -1053,6 +1053,7 @@ var _ = Describe("Converter", func() {
 				SRIOVDevices:          map[string][]string{},
 				SMBios:                TestSmbios,
 				GpuDevices:            []string{},
+				IBDevices:             []string{},
 				MemBalloonStatsPeriod: 10,
 			}
 		})
@@ -2380,6 +2381,54 @@ var _ = Describe("Converter", func() {
 
 		})
 	})
+
+	Context("IB resource request", func() {
+		vmi := &v1.VirtualMachineInstance{
+			ObjectMeta: k8smeta.ObjectMeta{
+				Name:      "testvmi",
+				Namespace: "mynamespace",
+				UID:       "1234",
+			},
+			Spec: v1.VirtualMachineInstanceSpec{
+				Domain: v1.DomainSpec{
+					Devices: v1.Devices{
+						IBs: []v1.IB{
+							v1.IB{
+								DeviceName: "vendor.com/ib_name",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		v1.SetObjectDefaults_VirtualMachineInstance(vmi)
+
+		It("should convert IB resource request into host devices", func() {
+			c := &ConverterContext{
+				UseEmulation: true,
+				IBDevices:    []string{"2020:13:10.0", "2020:13:10.1"},
+			}
+
+			domain := vmiToDomain(vmi, c)
+
+			Expect(len(domain.Spec.Devices.HostDevices)).To(Equal(2))
+			Expect(domain.Spec.Devices.HostDevices[0].Type).To(Equal("pci"))
+			Expect(domain.Spec.Devices.HostDevices[0].Managed).To(Equal("yes"))
+			Expect(domain.Spec.Devices.HostDevices[0].Source.Address.Domain).To(Equal("0x2020"))
+			Expect(domain.Spec.Devices.HostDevices[0].Source.Address.Bus).To(Equal("0x13"))
+			Expect(domain.Spec.Devices.HostDevices[0].Source.Address.Slot).To(Equal("0x10"))
+			Expect(domain.Spec.Devices.HostDevices[0].Source.Address.Function).To(Equal("0x0"))
+			Expect(domain.Spec.Devices.HostDevices[1].Type).To(Equal("pci"))
+			Expect(domain.Spec.Devices.HostDevices[1].Managed).To(Equal("yes"))
+			Expect(domain.Spec.Devices.HostDevices[1].Source.Address.Domain).To(Equal("0x2020"))
+			Expect(domain.Spec.Devices.HostDevices[1].Source.Address.Bus).To(Equal("0x13"))
+			Expect(domain.Spec.Devices.HostDevices[1].Source.Address.Slot).To(Equal("0x10"))
+			Expect(domain.Spec.Devices.HostDevices[1].Source.Address.Function).To(Equal("0x1"))
+
+		})
+	})
+
 })
 
 var _ = Describe("popSRIOVPCIAddress", func() {

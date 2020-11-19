@@ -335,6 +335,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"kubevirt.io/client-go/api/v1.Hugepages":                                                  schema_kubevirtio_client_go_api_v1_Hugepages(ref),
 		"kubevirt.io/client-go/api/v1.HypervTimer":                                                schema_kubevirtio_client_go_api_v1_HypervTimer(ref),
 		"kubevirt.io/client-go/api/v1.I6300ESBWatchdog":                                           schema_kubevirtio_client_go_api_v1_I6300ESBWatchdog(ref),
+		"kubevirt.io/client-go/api/v1.IB":                                                         schema_kubevirtio_client_go_api_v1_IB(ref),
 		"kubevirt.io/client-go/api/v1.Input":                                                      schema_kubevirtio_client_go_api_v1_Input(ref),
 		"kubevirt.io/client-go/api/v1.Interface":                                                  schema_kubevirtio_client_go_api_v1_Interface(ref),
 		"kubevirt.io/client-go/api/v1.InterfaceBindingMethod":                                     schema_kubevirtio_client_go_api_v1_InterfaceBindingMethod(ref),
@@ -14368,6 +14369,18 @@ func schema_kubevirtio_client_go_api_v1_Devices(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"ibs": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("kubevirt.io/client-go/api/v1.IB"),
+									},
+								},
+							},
+						},
+					},
 					"filesystems": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -14390,7 +14403,7 @@ func schema_kubevirtio_client_go_api_v1_Devices(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"kubevirt.io/client-go/api/v1.Disk", "kubevirt.io/client-go/api/v1.Filesystem", "kubevirt.io/client-go/api/v1.GPU", "kubevirt.io/client-go/api/v1.Input", "kubevirt.io/client-go/api/v1.Interface", "kubevirt.io/client-go/api/v1.Rng", "kubevirt.io/client-go/api/v1.Watchdog"},
+			"kubevirt.io/client-go/api/v1.Disk", "kubevirt.io/client-go/api/v1.Filesystem", "kubevirt.io/client-go/api/v1.GPU", "kubevirt.io/client-go/api/v1.IB", "kubevirt.io/client-go/api/v1.Input", "kubevirt.io/client-go/api/v1.Interface", "kubevirt.io/client-go/api/v1.Rng", "kubevirt.io/client-go/api/v1.Watchdog"},
 	}
 }
 
@@ -15198,6 +15211,32 @@ func schema_kubevirtio_client_go_api_v1_I6300ESBWatchdog(ref common.ReferenceCal
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_kubevirtio_client_go_api_v1_IB(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the GPU device as exposed by a device plugin",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"deviceName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"name", "deviceName"},
 			},
 		},
 	}

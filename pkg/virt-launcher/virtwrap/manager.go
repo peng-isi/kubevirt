@@ -75,6 +75,7 @@ import (
 const LibvirtLocalConnectionPort = 22222
 const gpuEnvPrefix = "GPU_PASSTHROUGH_DEVICES"
 const vgpuEnvPrefix = "VGPU_PASSTHROUGH_DEVICES"
+const IBEnvPrefix = "IB"
 
 type contextStore struct {
 	ctx    context.Context
@@ -1229,6 +1230,7 @@ func (l *LibvirtDomainManager) SyncVMI(vmi *v1.VirtualMachineInstance, useEmulat
 		SRIOVDevices:      getSRIOVPCIAddresses(vmi.Spec.Domain.Devices.Interfaces),
 		GpuDevices:        getEnvAddressListByPrefix(gpuEnvPrefix),
 		VgpuDevices:       getEnvAddressListByPrefix(vgpuEnvPrefix),
+		IBDevices:         getEnvAddressListByPrefix(IBEnvPrefix),
 		EmulatorThreadCpu: emulatorThreadCpu,
 		OVMFPath:          l.ovmfPath,
 	}
@@ -1238,6 +1240,9 @@ func (l *LibvirtDomainManager) SyncVMI(vmi *v1.VirtualMachineInstance, useEmulat
 		}
 		c.MemBalloonStatsPeriod = uint(options.MemBalloonStatsPeriod)
 	}
+
+	//added by Peng Xie
+	log.DefaultLogger().Info("Peng Xie: before converting...")
 
 	if err := api.Convert_v1_VirtualMachine_To_api_Domain(vmi, domain, c); err != nil {
 		logger.Error("Conversion failed.")

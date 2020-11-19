@@ -908,6 +908,28 @@ var _ = Describe("getSRIOVPCIAddresses", func() {
 	})
 })
 
+//added by Peng Xie
+var _ = Describe("getEnvAddressListByPrefix with IB prefix", func() {
+	It("returns empty if PCI address is not set", func() {
+		Expect(len(getEnvAddressListByPrefix(IBEnvPrefix))).To(Equal(0))
+	})
+
+	It("returns single PCI address ", func() {
+		os.Setenv("IB", "2020:13:10.0,")
+		addrs := getEnvAddressListByPrefix(IBEnvPrefix)
+		Expect(len(addrs)).To(Equal(1))
+		Expect(addrs[0]).To(Equal("2020:13:10.0"))
+	})
+
+	It("returns multiple PCI addresses", func() {
+		os.Setenv("IB", "2020:13:10.0,2020:13:10.1")
+		addrs := getEnvAddressListByPrefix(IBEnvPrefix)
+		Expect(len(addrs)).To(Equal(2))
+		Expect(addrs[0]).To(Equal("2020:13:10.0"))
+		Expect(addrs[1]).To(Equal("2020:13:10.1"))
+	})
+})
+
 var _ = Describe("getEnvAddressListByPrefix with gpu prefix", func() {
 	It("returns empty if PCI address is not set", func() {
 		Expect(len(getEnvAddressListByPrefix(gpuEnvPrefix))).To(Equal(0))

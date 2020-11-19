@@ -212,6 +212,13 @@ func (GPU) SwaggerDoc() map[string]string {
 	}
 }
 
+func (IB) SwaggerDoc() map[string]string {
+	return map[string]string{
+		"":     "+k8s:openapi-gen=true",
+		"name": "Name of the GPU device as exposed by a device plugin",
+	}
+}
+
 func (Disk) SwaggerDoc() map[string]string {
 	return map[string]string{
 		"":                  "+k8s:openapi-gen=true",

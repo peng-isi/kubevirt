@@ -202,6 +202,9 @@ func (c *VMIController) Execute() bool {
 	defer c.Queue.Done(key)
 	err := c.execute(key.(string))
 
+	//added by Peng Xie
+	fmt.Println("VNI controller: Execute")
+
 	if err != nil {
 		log.Log.Reason(err).Infof("reenqueuing VirtualMachineInstance %v", key)
 		c.Queue.AddRateLimited(key)

@@ -40,7 +40,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/validation"
 	k8sfield "k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/pointer"
 
 	v1 "kubevirt.io/client-go/api/v1"
 	"kubevirt.io/kubevirt/pkg/hooks"
@@ -50,46 +49,27 @@ import (
 )
 
 var _ = Describe("Validating VMICreate Admitter", func() {
-	kv := &v1.KubeVirt{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kubevirt",
-			Namespace: "kubevirt",
-		},
-		Spec: v1.KubeVirtSpec{
-			Configuration: v1.KubeVirtConfiguration{
-				DeveloperConfiguration: &v1.DeveloperConfiguration{},
-			},
-		},
-		Status: v1.KubeVirtStatus{
-			Phase: v1.KubeVirtPhaseDeploying,
-		},
-	}
-	config, _, _, kvInformer := testutils.NewFakeClusterConfigUsingKV(kv)
+	config, configMapInformer, _, _ := testutils.NewFakeClusterConfig(&k8sv1.ConfigMap{})
 	vmiCreateAdmitter := &VMICreateAdmitter{ClusterConfig: config}
 
 	dnsConfigTestOption := "test"
 	enableFeatureGate := func(featureGate string) {
-		kvConfig := kv.DeepCopy()
-		kvConfig.Spec.Configuration.DeveloperConfiguration.FeatureGates = []string{featureGate}
-		testutils.UpdateFakeKubeVirtClusterConfig(kvInformer, kvConfig)
+		testutils.UpdateFakeClusterConfig(configMapInformer, &k8sv1.ConfigMap{
+			Data: map[string]string{virtconfig.FeatureGatesKey: featureGate},
+		})
 	}
 	disableFeatureGates := func() {
-		testutils.UpdateFakeKubeVirtClusterConfig(kvInformer, kv)
+		testutils.UpdateFakeClusterConfig(configMapInformer, &k8sv1.ConfigMap{})
 	}
 	enableSlirpInterface := func() {
-		kvConfig := kv.DeepCopy()
-		kvConfig.Spec.Configuration.NetworkConfiguration = &v1.NetworkConfiguration{
-			PermitSlirpInterface: pointer.BoolPtr(true),
-		}
-		testutils.UpdateFakeKubeVirtClusterConfig(kvInformer, kvConfig)
+		testutils.UpdateFakeClusterConfig(configMapInformer, &k8sv1.ConfigMap{
+			Data: map[string]string{virtconfig.PermitSlirpInterface: "true"},
+		})
 	}
 	disableBridgeOnPodNetwork := func() {
-		kvConfig := kv.DeepCopy()
-		kvConfig.Spec.Configuration.NetworkConfiguration = &v1.NetworkConfiguration{
-			PermitBridgeInterfaceOnPodNetwork: pointer.BoolPtr(false),
-		}
-
-		testutils.UpdateFakeKubeVirtClusterConfig(kvInformer, kvConfig)
+		testutils.UpdateFakeClusterConfig(configMapInformer, &k8sv1.ConfigMap{
+			Data: map[string]string{virtconfig.PermitBridgeInterfaceOnPodNetwork: "false"},
+		})
 	}
 
 	AfterEach(func() {
@@ -1836,6 +1816,21 @@ var _ = Describe("Validating VMICreate Admitter", func() {
 			Expect(len(causes)).To(Equal(1))
 			Expect(causes[0].Field).To(Equal("fake.GPUs"))
 		})
+
+		It("should reject IB devices when IB feature gate is disabled(default)", func() {
+			vmi := v1.NewMinimalVMI("testvm")
+			vmi.Spec.Domain.Devices.IBs = []v1.IB{
+				v1.IB{
+					Name:       "ib1",
+					DeviceName: "vendor.com/qat_name",
+				},
+			}
+
+			causes := ValidateVirtualMachineInstanceSpec(k8sfield.NewPath("fake"), &vmi.Spec, config)
+			Expect(len(causes)).To(Equal(1))
+			Expect(causes[0].Field).To(Equal("fake.IBs"))
+		})
+
 		It("should reject virtiofs filesystems when feature gate is disabled", func() {
 			vmi := v1.NewMinimalVMI("testvm")
 			guestMemory := resource.MustParse("64Mi")
